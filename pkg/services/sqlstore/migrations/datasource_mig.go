@@ -146,4 +146,7 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Add is_hidden column", NewAddColumnMigration(tableV2, &Column{
 		Name: "is_hidden", Type: DB_Bool, Nullable: true, Default: "0",
 	}))
+
+	mg.AddMigration("add unique index datasource_org_id_is_hidden", NewAddIndexMigration(tableV2, &Index{
+		Cols: []string{"org_id", "is_hidden"}}))
 }
