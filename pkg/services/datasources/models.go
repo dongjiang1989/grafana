@@ -67,6 +67,8 @@ type DataSource struct {
 	APIVersion string `json:"apiVersion" xorm:"api_version"`
 	// swagger:ignore
 	IsPrunable bool `xorm:"is_prunable"`
+	// swagger:ignore
+	IsHidden bool `json:"hidden" xorm:"is_hidden"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
@@ -174,6 +176,7 @@ type AddDataSourceCommand struct {
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
+	IsHidden                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 }
@@ -202,6 +205,7 @@ type UpdateDataSourceCommand struct {
 	OrgID                   int64             `json:"-"`
 	ID                      int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
+	IsHidden                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 	IgnoreOldSecureJsonData bool              `json:"-"`
@@ -237,6 +241,8 @@ type GetDataSourcesQuery struct {
 	OrgID           int64
 	DataSourceLimit int
 	User            *user.SignedInUser
+
+	IsHidden *bool
 }
 
 type GetAllDataSourcesQuery struct{}
@@ -245,6 +251,8 @@ type GetDataSourcesByTypeQuery struct {
 	OrgID    int64 // optional: filter by org_id
 	Type     string
 	AliasIDs []string
+
+	IsHidden *bool
 }
 
 // GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
@@ -255,6 +263,8 @@ type GetDataSourceQuery struct {
 	Name string
 
 	OrgID int64
+
+	IsHidden *bool
 }
 
 type DatasourcesPermissionFilterQuery struct {

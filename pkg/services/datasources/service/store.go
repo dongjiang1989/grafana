@@ -71,11 +71,16 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 		}
 	}
 
-	datasource := &datasources.DataSource{Name: query.Name, OrgID: query.OrgID, ID: query.ID, UID: query.UID}
+	isHidden := false
+	if query.IsHidden != nil {
+		isHidden = *query.IsHidden
+	}
+
+	datasource := &datasources.DataSource{Name: query.Name, OrgID: query.OrgID, ID: query.ID, UID: query.UID, IsHidden: isHidden}
 	has, err := sess.Get(datasource)
 
 	if err != nil {
-		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID)
+		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID, "hidden", isHidden)
 		return nil, err
 	} else if !has {
 		return nil, datasources.ErrDataSourceNotFound
@@ -89,11 +94,17 @@ func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDa
 		sess        *xorm.Session
 		dataSources []*datasources.DataSource
 	)
+
+	isHidden := false
+	if query.IsHidden != nil {
+		isHidden = *query.IsHidden
+	}
+
 	return dataSources, ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		if query.DataSourceLimit <= 0 {
-			sess = dbSess.Where("org_id=?", query.OrgID).Asc("name")
+			sess = dbSess.Where("org_id=? AND is_hidden=?", query.OrgID, isHidden).Asc("name")
 		} else {
-			sess = dbSess.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgID).Asc("name")
+			sess = dbSess.Limit(query.DataSourceLimit, 0).Where("org_id=? AND is_hidden=?", query.OrgID, isHidden).Asc("name")
 		}
 
 		return sess.Find(&dataSources)
@@ -122,13 +133,19 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 	}
 	typeQuery = "(" + typeQuery + ")"
 
+	isHidden := false
+	if query.IsHidden != nil {
+		isHidden = *query.IsHidden
+	}
+
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.OrgID > 0 {
-			args = append([]interface{}{query.OrgID}, args...)
-			return sess.Where("org_id=? AND "+typeQuery, args...).Asc("id").Find(&dataSources)
+			args = append([]interface{}{query.OrgID, isHidden}, args...)
+			return sess.Where("org_id=? AND is_hidden=? AND "+typeQuery, args...).Asc("id").Find(&dataSources)
 		}
-		return sess.Where(typeQuery, args...).Asc("id").Find(&dataSources)
+		args = append([]interface{}{isHidden}, args...)
+		return sess.Where("is_hidden=? AND "+typeQuery, args...).Asc("id").Find(&dataSources)
 	})
 }
 
@@ -193,7 +210,7 @@ func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 
 	r := result{}
 	if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := "SELECT COUNT(*) AS count FROM data_source"
+		rawSQL := "SELECT COUNT(*) AS count FROM data_source WHERE is_hidden=false"
 		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
 			return err
 		}
@@ -210,7 +227,7 @@ func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 
 	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			rawSQL := "SELECT COUNT(*) AS count FROM data_source WHERE org_id=?"
+			rawSQL := "SELECT COUNT(*) AS count FROM data_source WHERE org_id=? AND is_hidden=false"
 			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
 				return err
 			}
@@ -275,6 +292,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			Updated:         time.Now(),
 			Version:         1,
 			ReadOnly:        cmd.ReadOnly,
+			IsHidden:        cmd.IsHidden,
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
@@ -352,6 +370,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			SecureJsonData:  cmd.EncryptedSecureJsonData,
 			Updated:         time.Now(),
 			ReadOnly:        cmd.ReadOnly,
+			IsHidden:        cmd.IsHidden,
 			Version:         cmd.Version + 1,
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
@@ -362,6 +381,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		sess.UseBool("basic_auth")
 		sess.UseBool("with_credentials")
 		sess.UseBool("read_only")
+		sess.UseBool("is_hidden")
 		sess.UseBool("is_prunable")
 		// Make sure database field is zeroed out if empty. We want to migrate away from this field.
 		sess.MustCols("database")

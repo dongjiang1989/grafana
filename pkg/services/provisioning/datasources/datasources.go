@@ -64,7 +64,7 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 	}
 
 	for _, ds := range cfg.Datasources {
-		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name, IsHidden: func(v bool) *bool { return &v }(ds.IsHidden)}
 		dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
 		if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return err

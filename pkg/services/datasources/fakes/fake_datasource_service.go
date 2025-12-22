@@ -23,7 +23,8 @@ func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *dataso
 		idMatch := query.ID != 0 && query.ID == dataSource.ID
 		uidMatch := query.UID != "" && query.UID == dataSource.UID
 		nameMatch := query.Name != "" && query.Name == dataSource.Name
-		if idMatch || nameMatch || uidMatch {
+		hiddenMach := query.IsHidden != nil && *query.IsHidden == dataSource.IsHidden
+		if idMatch || nameMatch || uidMatch || hiddenMach {
 			return dataSource, nil
 		}
 	}
@@ -34,7 +35,8 @@ func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datas
 	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {
 		orgMatch := query.OrgID != 0 && query.OrgID == datasource.OrgID
-		if orgMatch {
+		hiddenMach := query.IsHidden != nil && *query.IsHidden == datasource.IsHidden
+		if orgMatch || hiddenMach {
 			dataSources = append(dataSources, datasource)
 		}
 	}
@@ -62,7 +64,8 @@ func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query 
 			continue
 		}
 		typeMatch := query.Type != "" && query.Type == datasource.Type
-		if typeMatch {
+		hiddenMach := query.IsHidden != nil && *query.IsHidden == datasource.IsHidden
+		if typeMatch || hiddenMach {
 			dataSources = append(dataSources, datasource)
 		}
 	}

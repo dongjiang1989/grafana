@@ -27,6 +27,7 @@ type DataSource struct {
 	SecureJsonFields map[string]bool        `json:"secureJsonFields"`
 	Version          int                    `json:"version"`
 	ReadOnly         bool                   `json:"readOnly"`
+	IsHidden         bool                   `json:"isHidden"`
 	AccessControl    accesscontrol.Metadata `json:"accessControl,omitempty"`
 	// swagger:ignore
 	APIVersion string `json:"apiVersion"`
@@ -48,6 +49,7 @@ type DataSourceListItemDTO struct {
 	IsDefault   bool                 `json:"isDefault"`
 	JsonData    *simplejson.Json     `json:"jsonData,omitempty"`
 	ReadOnly    bool                 `json:"readOnly"`
+	IsHidden    bool                 `json:"isHidden"`
 }
 
 type DataSourceList []DataSourceListItemDTO

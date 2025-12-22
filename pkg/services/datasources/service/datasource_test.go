@@ -56,7 +56,8 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *data
 		idMatch := query.ID != 0 && query.ID == dataSource.ID
 		uidMatch := query.UID != "" && query.UID == dataSource.UID
 		nameMatch := query.Name != "" && query.Name == dataSource.Name
-		if idMatch || nameMatch || uidMatch {
+		hiddenMach := query.IsHidden != nil && *query.IsHidden == dataSource.IsHidden
+		if idMatch || nameMatch || uidMatch || hiddenMach {
 			return dataSource, nil
 		}
 	}

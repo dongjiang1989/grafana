@@ -76,6 +76,7 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 			IsDefault: ds.IsDefault,
 			JsonData:  ds.JsonData,
 			ReadOnly:  ds.ReadOnly,
+			IsHidden:  ds.IsHidden,
 		}
 
 		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {
@@ -836,6 +837,7 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 		SecureJsonFields: map[string]bool{},
 		Version:          ds.Version,
 		ReadOnly:         ds.ReadOnly,
+		IsHidden:         ds.IsHidden,
 		APIVersion:       ds.APIVersion,
 	}
 
