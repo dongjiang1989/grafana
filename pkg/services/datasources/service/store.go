@@ -210,8 +210,8 @@ func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 
 	r := result{}
 	if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := "SELECT COUNT(*) AS count FROM data_source WHERE is_hidden=false"
-		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
+		rawSQL := "SELECT COUNT(*) AS count FROM data_source WHERE is_hidden=?"
+		if _, err := sess.SQL(rawSQL, false).Get(&r); err != nil {
 			return err
 		}
 		return nil
@@ -227,8 +227,8 @@ func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 
 	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			rawSQL := "SELECT COUNT(*) AS count FROM data_source WHERE org_id=? AND is_hidden=false"
-			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
+			rawSQL := "SELECT COUNT(*) AS count FROM data_source WHERE org_id=? AND is_hidden=?"
+			if _, err := sess.SQL(rawSQL, scopeParams.OrgID, false).Get(&r); err != nil {
 				return err
 			}
 			return nil
